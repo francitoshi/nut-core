@@ -2,10 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven-publish'
 
 group = 'com.github.francitoshi'
-version = '0.0.15'
-
-sourceCompatibility = 1.8 // java 8
-targetCompatibility = 1.8
+version = '0.0.31'
 
 repositories 
 {
@@ -15,18 +12,26 @@ repositories
 
 dependencies
 {
-    implementation 'com.github.francitoshi:nut-base:v0.0.15'
+    implementation 'com.github.francitoshi:nut-base:v0.0.31'
 	
     // Use JUnit Jupiter for testing.
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
     testImplementation 'org.bouncycastle:bcprov-jdk15on:1.62'
     testImplementation 'org.apache.commons:commons-csv:1.9.0'
 }
 
 java 
 {
-	withSourcesJar()
-//	withJavadocJar()
+    sourceCompatibility = 1.8 // java 8
+    targetCompatibility = 1.8
+    withSourcesJar()
+    withJavadocJar()
+}
+
+wrapper 
+{
+    gradleVersion = "8.2"
+    distributionType = Wrapper.DistributionType.ALL
 }
 
 test 
@@ -44,10 +49,4 @@ publishing
             from components.java
         }
     }
-}
-
-wrapper 
-{
-    gradleVersion = "7.3.3"
-    distributionType = Wrapper.DistributionType.ALL
 }
