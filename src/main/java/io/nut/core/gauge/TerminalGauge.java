@@ -40,28 +40,37 @@ public class TerminalGauge extends AbstractGauge
     
     private boolean debug = false;
    
-    private final boolean hasConsole;
     private final Terminal terminal;
+    private final boolean forceNewLine;
     private final PrintStream out;
     private volatile int widthLimit=Integer.MAX_VALUE;
     private volatile char fillChar = BLOCK;
     private volatile char emptyChar = LIGHT_SHADE;
         
-    public TerminalGauge(Terminal terminal)
+    public TerminalGauge(Terminal terminal, boolean forceNewLine) throws IOException
     {
         super();
         this.out = System.out;
-        this.hasConsole = System.console()!=null;
-        this.terminal = terminal;
+        this.terminal = terminal!=null ? terminal : getTerminal();
+        this.forceNewLine = forceNewLine;
+    }
+    public TerminalGauge(Terminal terminal) throws IOException
+    {
+        this(terminal, false);
+    }
+    public TerminalGauge(boolean forceNewLine) throws IOException
+    {
+        this(null, false);
     }
     public TerminalGauge() throws IOException
     {
-        super();
-        this.out = System.out;
-        this.hasConsole = System.console()!=null;
-        this.terminal = hasConsole ? TerminalBuilder.terminal() : TerminalBuilder.builder().streams(System.in, System.out).build();
+        this(null, false);
     }
-
+    public static Terminal getTerminal() throws IOException
+    {
+        return System.console()!=null ? TerminalBuilder.terminal() : TerminalBuilder.builder().streams(System.in, System.out).build();
+    }
+    
     public void println(String s)
     {
         this.out.print(new Ansi().append('\r').eraseLine(Ansi.Erase.ALL).append(s).append('\n'));
@@ -157,7 +166,7 @@ public class TerminalGauge extends AbstractGauge
                 tail.append(" | ").append(String.format(TIME_FMT[index], prev, next, full));
             }
         }
-        String s = Ansi.ansi().append('\r').append(head).append(tail).append(hasConsole?'\r':'\n').toString();
+        String s = Ansi.ansi().append('\r').append(head).append(tail).append(forceNewLine?'\n':'\r').toString();
         this.out.print(s);
         this.out.flush();
     }
