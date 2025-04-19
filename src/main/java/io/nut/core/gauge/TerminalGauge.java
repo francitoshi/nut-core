@@ -62,21 +62,6 @@ public class TerminalGauge extends AbstractGauge
         this.terminal = hasConsole ? TerminalBuilder.terminal() : TerminalBuilder.builder().streams(System.in, System.out).build();
     }
 
-    public void setWidthLimit(int value)
-    {
-        this.widthLimit = value;
-    }
-
-    public void setFillChar(char fillChar)
-    {
-        this.fillChar = fillChar;
-    }
-
-    public void setEmptyChar(char emptyChar)
-    {
-        this.emptyChar = emptyChar;
-    }
-
     public void println(String s)
     {
         this.out.print(new Ansi().append('\r').eraseLine(Ansi.Erase.ALL).append(s).append('\n'));
@@ -187,6 +172,18 @@ public class TerminalGauge extends AbstractGauge
         this.debug = debug;
     }
 
-    //hacer que consoleGaugeView herede de esta
+    public void setWidthLimit(int value)
+    {
+        this.widthLimit = value;
+    }
 
+    public void setFillChar(char fillChar)
+    {
+        this.fillChar = fillChar;
+    }
+
+    public void setEmptyChar(char emptyChar)
+    {
+        this.emptyChar = emptyChar;
+    }
 }
