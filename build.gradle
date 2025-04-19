@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven-publish'
 
 group = 'com.github.francitoshi'
-version = '0.0.31'
+version = '0.1.4'
 
 repositories 
 {
@@ -12,11 +12,16 @@ repositories
 
 dependencies
 {
-    implementation 'com.github.francitoshi:nut-base:v0.0.31'
+    implementation 'com.github.francitoshi:nut-base:v0.1.4'
 	
-    // Use JUnit Jupiter for testing.
+//    implementation 'org.mapdb:mapdb:3.1.0'
+
+    implementation 'org.jline:jline-terminal:3.29.0'
+
+//    implementation 'org.bouncycastle:bcprov-jdk18on:1.78'
+    
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
-    testImplementation 'org.bouncycastle:bcprov-jdk15on:1.62'
+    //testImplementation 'org.bouncycastle:bcprov-jdk15on:1.62'
     testImplementation 'org.apache.commons:commons-csv:1.9.0'
 }
 
