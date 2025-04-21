@@ -22,7 +22,6 @@
 package io.nut.core.gauge;
 
 import io.nut.base.gauge.AbstractGauge;
-import io.nut.base.io.ansi.Ansi;
 import io.nut.base.util.Strings;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -43,7 +42,7 @@ public class TerminalGauge extends AbstractGauge
     private final Terminal terminal;
     private final boolean forceNewLine;
     private final PrintStream out;
-    private volatile int widthLimit=Integer.MAX_VALUE;
+    private volatile int widthLimit = Integer.MAX_VALUE;
     private volatile char fillChar = BLOCK;
     private volatile char emptyChar = LIGHT_SHADE;
         
@@ -51,30 +50,36 @@ public class TerminalGauge extends AbstractGauge
     {
         super();
         this.out = System.out;
-        this.terminal = terminal!=null ? terminal : getTerminal();
+        this.terminal = terminal != null ? terminal : getTerminal();
         this.forceNewLine = forceNewLine;
     }
+
     public TerminalGauge(Terminal terminal) throws IOException
     {
         this(terminal, false);
     }
+
     public TerminalGauge(boolean forceNewLine) throws IOException
     {
-        this(null, false);
+        this(null, forceNewLine);
     }
+
     public TerminalGauge() throws IOException
     {
         this(null, false);
     }
+
     public static Terminal getTerminal() throws IOException
     {
-        return System.console()!=null ? TerminalBuilder.terminal() : TerminalBuilder.builder().streams(System.in, System.out).build();
+        return System.console() != null ? TerminalBuilder.terminal() : TerminalBuilder.builder().streams(System.in, System.out).build();
     }
     
+    private static final String LINE_CLEAN = "\u001B[2K";
+
     public void println(String s)
     {
-        this.out.print(new Ansi().append('\r').eraseLine(Ansi.Erase.ALL).append(s).append('\n'));
-        this.out.flush();
+        System.out.println(LINE_CLEAN+"\r"+s+"\r");
+        System.out.flush();
         invalidate();
     }
     
@@ -90,30 +95,30 @@ public class TerminalGauge extends AbstractGauge
         "%1$s + %2$s = %3$s"//421   7
     };
     
-    private volatile boolean prevEnabled;
-    private volatile boolean nextEnabled;
-    private volatile boolean fullEnabled;
+    private volatile boolean prevEnabled = true;
+    private volatile boolean nextEnabled = true;
+    private volatile boolean fullEnabled = true;
     
     public void paint(boolean started, int max, int val, double done, String prefix, String prev, String next, String full)
     {
-        prevEnabled &= prev!=null;
-        nextEnabled &= next!=null;
-        fullEnabled &= full!=null;
+        prevEnabled &= prev != null;
+        nextEnabled &= next != null;
+        fullEnabled &= full != null;
         
-        int index = (prev!=null?4:0) + (prev!=null?2:0) + (prev!=null?1:0);
-        int width = (prev!=null?9:0) + (prev!=null?9:0) + (prev!=null?9:0);
+        int index = (prev != null ? 4 : 0) + (next != null ? 2 : 0) + (full != null ? 1 : 0);
+        int width = (prev != null ? 9 : 0) + (next != null ? 9 : 0) + (full != null ? 9 : 0);
         
         StringBuilder head = new StringBuilder("\r");
         StringBuilder tail = new StringBuilder();
-        if(prefix!=null && !(prefix=prefix.trim()).isEmpty())
+        if (prefix != null && !(prefix = prefix.trim()).isEmpty())
         {
             head.append(prefix);
-            width += prefix.length()+3;
+            width += prefix.length() + 3;
         }
-        if(max>0)
+        if (max > 0)
         {
             tail.append(String.format("%d/%d ", val, max));
-            width += Math.log10(max)*2+3;
+            width += Math.log10(max) * 2 + 3;
         }
         tail.append(String.format("%.2f%%", done*100));
         width += 7;
@@ -166,7 +171,7 @@ public class TerminalGauge extends AbstractGauge
                 tail.append(" | ").append(String.format(TIME_FMT[index], prev, next, full));
             }
         }
-        String s = Ansi.ansi().append('\r').append(head).append(tail).append(forceNewLine?'\n':'\r').toString();
+        String s = head.append(tail).append(forceNewLine ? '\n' : '\r').toString();
         this.out.print(s);
         this.out.flush();
     }
@@ -181,9 +186,10 @@ public class TerminalGauge extends AbstractGauge
         this.debug = debug;
     }
 
-    public void setWidthLimit(int value)
+    public TerminalGauge setWidthLimit(int value)
     {
         this.widthLimit = value;
+        return this;
     }
 
     public void setFillChar(char fillChar)
