@@ -39,7 +39,7 @@ public class TerminalGauge extends AbstractGauge
     
     private boolean debug = false;
    
-    private final Terminal terminal;
+    public final Terminal terminal;
     private final boolean forceNewLine;
     private final PrintStream out;
     private volatile int widthLimit = Integer.MAX_VALUE;
@@ -50,7 +50,7 @@ public class TerminalGauge extends AbstractGauge
     {
         super();
         this.out = System.out;
-        this.terminal = terminal != null ? terminal : getTerminal();
+        this.terminal = terminal != null ? terminal : buildTerminal();
         this.forceNewLine = forceNewLine;
     }
 
@@ -69,16 +69,17 @@ public class TerminalGauge extends AbstractGauge
         this(null, false);
     }
 
-    public static Terminal getTerminal() throws IOException
+    private static Terminal buildTerminal() throws IOException
     {
         return System.console() != null ? TerminalBuilder.terminal() : TerminalBuilder.builder().streams(System.in, System.out).build();
     }
     
-    private static final String LINE_CLEAN = "\u001B[2K";
+    private static final String ERASE_LINE_FORWARD = "\u001B[0K";
+    private static final String ERASE_LINE_FULL = "\u001B[2K";
 
     public void println(String s)
     {
-        System.out.println(LINE_CLEAN+"\r"+s+"\r");
+        System.out.println(ERASE_LINE_FULL+"\r"+s+"\r");
         System.out.flush();
         invalidate();
     }
@@ -105,6 +106,10 @@ public class TerminalGauge extends AbstractGauge
         nextEnabled &= next != null;
         fullEnabled &= full != null;
         
+        prev = prevEnabled ? prev : null;
+        next = nextEnabled ? next : null;
+        full = fullEnabled ? full : null;
+        
         int index = (prev != null ? 4 : 0) + (next != null ? 2 : 0) + (full != null ? 1 : 0);
         int width = (prev != null ? 9 : 0) + (next != null ? 9 : 0) + (full != null ? 9 : 0);
         
@@ -112,8 +117,8 @@ public class TerminalGauge extends AbstractGauge
         StringBuilder tail = new StringBuilder();
         if (prefix != null && !(prefix = prefix.trim()).isEmpty())
         {
-            head.append(prefix);
-            width += prefix.length() + 3;
+            head.append(prefix).append(" |");
+            width += prefix.length() + 2;
         }
         if (max > 0)
         {
@@ -122,7 +127,6 @@ public class TerminalGauge extends AbstractGauge
         }
         tail.append(String.format("%.2f%%", done*100));
         width += 7;
-        
         int maxWidth = Math.min(widthLimit, terminal.getWidth());
         int bar = maxWidth-width;
         
@@ -156,12 +160,12 @@ public class TerminalGauge extends AbstractGauge
         }
         if(bar>8)
         {
-            int b = bar-4;
-            int d = (int)(b*done);
-            int n = b-d;
-            String dd = Strings.repeat(fillChar, d);
-            String nn = Strings.repeat(emptyChar, n);
-            head.append(" |").append(dd).append(nn).append("| ");
+            int barCols = bar-4;
+            int headCols = (int)(barCols*done);
+            int tailCols = barCols-headCols;
+            String dd = Strings.repeat(fillChar, headCols);
+            String nn = Strings.repeat(emptyChar, tailCols);
+            head.append(dd).append(nn).append("| ");
         }
         if(index!=0)
         {                   
@@ -171,7 +175,7 @@ public class TerminalGauge extends AbstractGauge
                 tail.append(" | ").append(String.format(TIME_FMT[index], prev, next, full));
             }
         }
-        String s = head.append(tail).append(forceNewLine ? '\n' : '\r').toString();
+        String s = head.append(tail).append(ERASE_LINE_FORWARD).append(forceNewLine ? '\n' : '\r').toString();
         this.out.print(s);
         this.out.flush();
     }
