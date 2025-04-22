@@ -45,6 +45,11 @@ public class TerminalGauge extends AbstractGauge
     private volatile int widthLimit = Integer.MAX_VALUE;
     private volatile char fillChar = BLOCK;
     private volatile char emptyChar = LIGHT_SHADE;
+    
+    private volatile String boldSequence="";
+    private volatile String fillSequence="";
+    private volatile String emptySequence="";
+    private volatile String resetSequence="";
         
     public TerminalGauge(Terminal terminal, boolean forceNewLine) throws IOException
     {
@@ -76,6 +81,26 @@ public class TerminalGauge extends AbstractGauge
     
     private static final String ERASE_LINE_FORWARD = "\u001B[0K";
     private static final String ERASE_LINE_FULL = "\u001B[2K";
+    
+    private static final String RESET_ALL_MODES = "\u001B[0m";
+    private static final String SET_BOLD_MODE = "\u001B[1m";
+    
+    private static String fgColor(int color)
+    {
+        return "\u001B[38;5;"+color+"m";
+    }
+    private static String bgColor(int color)
+    {
+        return "\u001B[48;5;"+color+"m";
+    }
+    
+    public void setBarStyle(boolean bold, int fillColor, int emptyColor)
+    {
+        this.boldSequence = bold ? SET_BOLD_MODE:"";
+        this.fillSequence = fgColor(fillColor);
+        this.emptySequence = fgColor(emptyColor);
+        this.resetSequence = RESET_ALL_MODES;
+    }
 
     public void println(String s)
     {
@@ -165,7 +190,7 @@ public class TerminalGauge extends AbstractGauge
             int tailCols = barCols-headCols;
             String dd = Strings.repeat(fillChar, headCols);
             String nn = Strings.repeat(emptyChar, tailCols);
-            head.append(dd).append(nn).append("| ");
+            head.append(boldSequence).append(fillSequence).append(dd).append(emptySequence).append(nn).append(resetSequence).append("| ");
         }
         if(index!=0)
         {                   
