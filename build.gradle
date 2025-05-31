@@ -4,7 +4,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.8'
+version = '0.1.9'
 
 //remember to execute 'git tag -a vx.x.x -m "Version x.x.x"'
 
@@ -16,7 +16,7 @@ repositories
 
 dependencies
 {
-    implementation 'com.github.francitoshi:nut-base:v0.1.8'
+    implementation 'com.github.francitoshi:nut-base:v0.1.9'
 	
     implementation 'org.jline:jline-terminal:3.29.0'
 
