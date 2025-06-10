@@ -4,7 +4,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.9'
+version = '0.1.10'
 
 //remember to execute 'git tag -a vx.x.x -m "Version x.x.x"'
 
@@ -16,19 +16,21 @@ repositories
 
 dependencies
 {
-    implementation 'com.github.francitoshi:nut-base:v0.1.9'
+    implementation 'com.github.francitoshi:nut-base:v0.1.10'
 	
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.81'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.81'
+    implementation 'org.junit.jupiter:junit-jupiter:5.10.3'
+
     implementation 'org.jline:jline-terminal:3.29.0'
 
     implementation 'com.sun.mail:jakarta.mail:2.0.1'
 
 //    implementation 'org.mapdb:mapdb:3.1.0'
-
-//    implementation 'org.bouncycastle:bcprov-jdk18on:1.78'
     
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
-    //testImplementation 'org.bouncycastle:bcprov-jdk15on:1.62'
     testImplementation 'org.apache.commons:commons-csv:1.9.0'
+    testImplementation 'org.apache.commons:commons-csv:1.9.0'
+    testImplementation 'ch.obermuhlner:big-math:2.3.0'
 }
 
 java 
