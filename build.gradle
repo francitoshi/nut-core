@@ -4,33 +4,34 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.10'
-
-//remember to execute 'git tag -a vx.x.x -m "Version x.x.x"'
+version = '0.1.12'
+//remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
 {
     mavenCentral()
     maven { url 'https://jitpack.io' }
 }
-
+//run "./gradlew dependencies --configuration runtimeClasspath" to verify version problems
 dependencies
-{
-    implementation 'com.github.francitoshi:nut-base:v0.1.10'
+{    
+    implementation 'com.github.francitoshi:nut-base:0.1.12'
 	
     implementation 'org.bouncycastle:bcprov-jdk18on:1.81'
     implementation 'org.bouncycastle:bcpkix-jdk18on:1.81'
-    implementation 'org.junit.jupiter:junit-jupiter:5.10.3'
 
-    implementation 'org.jline:jline-terminal:3.29.0'
+    implementation 'com.google.code.gson:gson:2.13.1'
+    
+    implementation 'org.jline:jline-terminal:3.30.4'
 
     implementation 'com.sun.mail:jakarta.mail:2.0.1'
 
-//    implementation 'org.mapdb:mapdb:3.1.0'
-    
-    testImplementation 'org.apache.commons:commons-csv:1.9.0'
-    testImplementation 'org.apache.commons:commons-csv:1.9.0'
-    testImplementation 'ch.obermuhlner:big-math:2.3.0'
+    implementation 'org.mapdb:mapdb:3.1.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
+
+    testImplementation 'org.apache.commons:commons-csv:1.14.0'
+    testImplementation 'ch.obermuhlner:big-math:2.3.2'
 }
 
 java 
