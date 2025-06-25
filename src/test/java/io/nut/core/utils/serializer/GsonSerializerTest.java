@@ -22,14 +22,11 @@ package io.nut.core.utils.serializer;
 
 import io.nut.base.crypto.EncryptedMapWrapper;
 import io.nut.base.crypto.Kripto;
-import io.nut.base.serializer.AesGcmSerializer;
 import io.nut.base.serializer.StringSerializer;
-import io.nut.base.util.Strings;
 import java.io.File;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
 import java.util.Objects;
-import javax.crypto.SecretKey;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.mapdb.DB;
@@ -181,7 +178,7 @@ public class GsonSerializerTest
     public void testAes() throws InvalidKeySpecException
     {
         GsonSerializer<User> instance = new GsonSerializer<>(User.class);
-        Kripto kripto = Kripto.getInstance();
+        Kripto kripto = Kripto.getInstance().setMinimumPbkdf2Rounds(8);
         
         char[] passphrase = "passphrase".toCharArray();
 
