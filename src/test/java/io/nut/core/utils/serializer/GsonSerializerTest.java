@@ -178,7 +178,7 @@ public class GsonSerializerTest
     public void testAes() throws InvalidKeySpecException
     {
         GsonSerializer<User> instance = new GsonSerializer<>(User.class);
-        Kripto kripto = Kripto.getInstance().setMinimumPbkdf2Rounds(8);
+        Kripto kripto = Kripto.getInstance().setMinDeriveRounds(8);
         
         char[] passphrase = "passphrase".toCharArray();
 
