@@ -4,7 +4,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.29'
+version = '0.1.30'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
@@ -15,7 +15,7 @@ repositories
 //run "./gradlew dependencies --configuration runtimeClasspath" to verify version problems
 dependencies
 {
-    implementation 'com.github.francitoshi:nut-base:0.1.29'
+    implementation 'com.github.francitoshi:nut-base:0.1.30'
 	
     implementation 'org.bouncycastle:bcprov-jdk18on:1.81'
     implementation 'org.bouncycastle:bcpkix-jdk18on:1.81'
