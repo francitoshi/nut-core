@@ -24,19 +24,21 @@ package io.nut.core.net.mail;
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import jakarta.mail.NoSuchProviderException;
 import jakarta.mail.PasswordAuthentication;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import java.io.Closeable;
 import java.util.Properties;
 
 /**
  *
  * @author franci
  */
-public class SMTP
+public class SMTP implements Closeable
 {
     private static final String MAIL_SMTP_AUTH              = "mail.smtp.auth";
     private static final String MAIL_SMTP_STARTTLS_ENABLE   = "mail.smtp.starttls.enable";
@@ -45,80 +47,44 @@ public class SMTP
 
     public static final int SAFE_PORT_587 = 587;
     
-    private volatile boolean auth;
-    private volatile boolean starttlsEnable;
-    private volatile String host;
-    private volatile int port = 587;
-    
-    private volatile String username;
-    private volatile String password;
-    private volatile String from;
-    private volatile String to;
-    private volatile String cc;
-    private volatile String bcc;
-    private volatile String replyTo;
+    private final String host;
+    private final int port;
+    private final boolean auth;
+    private final boolean starttlsEnable;
+    private final String username;
+    private final String password;
+    private final String from;
+    private final String replyTo;
 
-    public void setAuth(boolean value)
+    public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, String password, String from, String replyTo)
     {
-        this.auth = value;
-    }
-
-    public void setStarttlsEnable(boolean value)
-    {
-        this.starttlsEnable = value;
-    }
-
-    public void setHost(String value)
-    {
-        this.host = value;
-    }
-
-    public void setPort(int value)
-    {
-        this.port = value;
-    }
-
-    public void setUsername(String value)
-    {
-        this.username = value;
-    }
-
-    public void setPassword(String value)
-    {
-        this.password = value;
-    }
-
-    public void setFrom(String value)
-    {
-        this.from = value;
-    }
-
-    public void setTo(String value)
-    {
-        this.to = value;
-    }
-
-    public void setCc(String value)
-    {
-        this.cc = value;
-    }
-
-    public void setBcc(String value)
-    {
-        this.bcc = value;
+        this.host = host;
+        this.port = port;
+        this.auth = auth;
+        this.starttlsEnable = starttlsEnable;
+        this.username = username;
+        this.password = password;
+        this.from = from;
+        this.replyTo = replyTo;
     }
     
-    public void send(String subject, String text) throws AddressException, MessagingException
+    public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, String password, String from)
     {
-        // Configuración del remitente
+        this(host, port, auth, starttlsEnable, username, password, from, null);
+    }
+    
+    private volatile Session session;
+    private volatile Transport transport;
 
+    public SMTP connect() throws NoSuchProviderException, MessagingException
+    {
         Properties props = new Properties();
         props.put(MAIL_SMTP_AUTH, auth?"true":"false");
         props.put(MAIL_SMTP_STARTTLS_ENABLE, starttlsEnable?"true":"false");
         props.put(MAIL_SMTP_HOST, host);
         props.put(MAIL_SMTP_PORT, Integer.toString(port));
 
-        Session session = Session.getInstance(props, new Authenticator()
+        session = Session.getInstance(props, new Authenticator()
         {
             @Override
             protected PasswordAuthentication getPasswordAuthentication()
@@ -126,19 +92,52 @@ public class SMTP
                 return new PasswordAuthentication(username, password);
             }
         });
-
+        transport = session.getTransport("smtp");
+        transport.connect();
+        return this;
+    }
+    
+    @Override
+    public void close()
+    {
+        try
+        {
+            transport.close();
+        }
+        catch (MessagingException ex)
+        {
+            System.getLogger(SMTP.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
+    }
+    
+    public void send(String subject, String text, String to, String cc, String bcc) throws AddressException, MessagingException
+    {
         Message message = new MimeMessage(session);
         message.setFrom(new InternetAddress(from));
-        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-        message.setSubject(subject);
-        message.setText(text);
         if(replyTo!=null && !replyTo.isEmpty())
         {
             message.setReplyTo(InternetAddress.parse(replyTo));
         }
-
-        Transport.send(message);
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        if (cc != null && !cc.isEmpty())
+        {
+            message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(cc));
+        }
+        if (bcc != null && !bcc.isEmpty())
+        {
+            message.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
+        }
+        message.setSubject(subject);
+        message.setText(text);
+        transport.sendMessage(message, message.getAllRecipients());
     }
-
+    public void send(String subject, String text, String to, String cc) throws AddressException, MessagingException
+    {
+        send(subject, text, to, cc, null);
+    }
+    public void send(String subject, String text, String to) throws AddressException, MessagingException
+    {
+        send(subject, text, to, null, null);
+    }
     
 }

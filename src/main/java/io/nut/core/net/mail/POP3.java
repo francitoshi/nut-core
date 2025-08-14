@@ -23,8 +23,10 @@ package io.nut.core.net.mail;
 
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
+import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -33,6 +35,7 @@ import java.util.Properties;
  */
 public class POP3 implements MailReader
 {
+    private static final String POP3 = "pop3";
     private static final String MAIL_POP3_HOST = "mail.pop3.host";
     private static final String MAIL_POP3_PORT = "mail.pop3.port";
     private static final String MAIL_POP3_AUTH = "mail.pop3.auth";
@@ -40,57 +43,27 @@ public class POP3 implements MailReader
 
     public static final int SAFE_PORT_995 = 995;
     
-    private volatile String host;
-    private volatile int port = 110;
-    private volatile boolean auth;
-    private volatile boolean sslEnable;
-    private volatile boolean readonly;
-    
-    private volatile String username;
-    private volatile String password;
+    private final String host;
+    private final int port;
+    private final boolean auth;
+    private final boolean sslEnable;
+    private final boolean readonly;
+    private final String username;
+    private final String password;
     
     private volatile Store store;
     private volatile Folder inbox;
 
-    @Override
-    public void setHost(String value)
+    public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, String password)
     {
-        this.host = value;
-    }
-
-    @Override
-    public void setPort(int value)
-    {
-        this.port = value;
-    }
-
-    public void setAuth(boolean auth)
-    {
+        this.host = host;
+        this.port = port;
         this.auth = auth;
+        this.sslEnable = sslEnable;
+        this.readonly = readonly;
+        this.username = username;
+        this.password = password;
     }
-
-    public void setSslEnable(boolean value)
-    {
-        this.sslEnable = value;
-    }
-
-    @Override
-    public void setReadonly(boolean value)
-    {
-        this.readonly = value;
-    }
-
-    @Override
-    public void setUsername(String value)
-    {
-        this.username = value;
-    }
-
-    @Override
-    public void setPassword(String value)
-    {
-        this.password = value;
-    }    
     
     @Override
     public void connect() throws Exception
@@ -102,7 +75,7 @@ public class POP3 implements MailReader
         props.put(MAIL_POP3_SSL_ENABLE, sslEnable);
 
         Session session = Session.getInstance(props);
-        store = session.getStore("pop3");
+        store = session.getStore(POP3);
         store.connect(host, username, password);
 
         inbox = store.getFolder("INBOX");
@@ -110,15 +83,31 @@ public class POP3 implements MailReader
     }
     
     @Override
-    public Message[] getMessages() throws Exception
+    public Message[] getMessages() throws MessagingException
     {
         return inbox.getMessages();
     }
     
     @Override
-    public void close() throws Exception
+    public void close() 
     {
-        inbox.close(false);
-        store.close();
+        try
+        {
+            inbox.close(false);
+            store.close();
+        }
+        catch (MessagingException ex)
+        {
+            System.getLogger(POP3.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
     }
+
+    @Override
+    public Message[] getMessages(Date since)
+    {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+ 
+    
+    
 }

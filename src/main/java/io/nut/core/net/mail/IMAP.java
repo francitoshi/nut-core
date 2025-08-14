@@ -23,8 +23,13 @@ package io.nut.core.net.mail;
 
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
+import jakarta.mail.search.ComparisonTerm;
+import jakarta.mail.search.ReceivedDateTerm;
+import jakarta.mail.search.SearchTerm;
+import java.util.Date;
 import java.util.Properties;
 
 /**
@@ -41,55 +46,28 @@ public class IMAP implements MailReader
 
     public static final int SAFE_PORT_993 = 993;
 
-    private volatile String host;
-    private volatile int port = 993;
-//    private volatile boolean auth;
-    private volatile boolean sslEnable;
-    private volatile boolean readonly;
+    private final String host;
+    private final int port;
+    private final boolean auth;
+    private final boolean sslEnable;
+    private final boolean readonly;
+    private final String username;
+    private final String password;
     
-    private volatile String username;
-    private volatile String password;
-
     private volatile Store store;
     private volatile Folder inbox;
 
-    @Override
-    public void setHost(String value)
+    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, String password)
     {
-        this.host = value;
+        this.host = host;
+        this.port = port;
+        this.auth = auth;
+        this.sslEnable = sslEnable;
+        this.readonly = readonly;
+        this.username = username;
+        this.password = password;
     }
 
-    @Override
-    public void setPort(int value)
-    {
-        this.port = value;
-    }
-
-    @Override
-    public void setSslEnable(boolean value)
-    {
-        this.sslEnable = value;
-    }
-
-    @Override
-    public void setReadonly(boolean value)
-    {
-        this.readonly = value;
-    }
-
-    @Override
-    public void setUsername(String value)
-    {
-        this.username = value;
-    }
-
-    @Override
-    public void setPassword(String value)
-    {
-        this.password = value;
-    }
-    
-    //hay que hacer que imap y pop3 hereden de la misma interfaz y con esto se puede hacer lo mismo con ambas una vez inicializado
     @Override
     public void connect() throws Exception
     {
@@ -108,15 +86,29 @@ public class IMAP implements MailReader
     }
 
     @Override
-    public Message[] getMessages() throws Exception
+    public Message[] getMessages() throws MessagingException
     {
        return inbox.getMessages();
     }
 
     @Override
-    public void close() throws Exception
+    public Message[] getMessages(Date after) throws MessagingException
     {
-        inbox.close(false);
-        store.close();
+        SearchTerm dateTerm = new ReceivedDateTerm(ComparisonTerm.GT, after);
+        return inbox.search(dateTerm);
+    }
+
+    @Override
+    public void close() 
+    {
+        try
+        {
+            inbox.close(false);
+            store.close();
+        }
+        catch (MessagingException ex)
+        {
+            System.getLogger(IMAP.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+        }
     }
 }

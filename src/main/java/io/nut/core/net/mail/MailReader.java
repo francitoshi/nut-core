@@ -22,21 +22,21 @@
 package io.nut.core.net.mail;
 
 import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import java.io.Closeable;
+import java.util.Date;
 
 /**
  *
  * @author franci
  */
-public interface MailReader
+public interface MailReader extends Closeable
 {
-    void setHost(String host);
-    void setPort(int port);
-    void setSslEnable(boolean sslEnable);
-    void setUsername(String username);
-    void setPassword(String password);
-    void setReadonly(boolean readonly);
     
     void connect() throws Exception;
-    Message[] getMessages() throws Exception;
-    void close() throws Exception;
+    Message[] getMessages() throws MessagingException;
+    Message[] getMessages(Date since) throws MessagingException;
+    
+    @Override
+    void close();
 }
