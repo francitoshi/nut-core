@@ -31,6 +31,8 @@ import jakarta.mail.search.ReceivedDateTerm;
 import jakarta.mail.search.SearchTerm;
 import java.util.Date;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -108,7 +110,7 @@ public class IMAP implements MailReader
         }
         catch (MessagingException ex)
         {
-            System.getLogger(IMAP.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            Logger.getLogger(IMAP.class.getName()).log(Level.SEVERE, (String) null, ex);
         }
     }
 }

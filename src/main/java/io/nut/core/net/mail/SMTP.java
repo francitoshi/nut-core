@@ -33,6 +33,8 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import java.io.Closeable;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -106,7 +108,7 @@ public class SMTP implements Closeable
         }
         catch (MessagingException ex)
         {
-            System.getLogger(SMTP.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            Logger.getLogger(SMTP.class.getName()).log(Level.SEVERE, (String) null, ex);
         }
     }
     

@@ -28,6 +28,8 @@ import jakarta.mail.Session;
 import jakarta.mail.Store;
 import java.util.Date;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -98,7 +100,7 @@ public class POP3 implements MailReader
         }
         catch (MessagingException ex)
         {
-            System.getLogger(POP3.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            Logger.getLogger(POP3.class.getName()).log(Level.SEVERE, (String) null, ex);
         }
     }
 
