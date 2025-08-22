@@ -21,11 +21,15 @@
  */
 package io.nut.core.net.mail;
 
+import io.nut.base.security.EncryptedString;
+import io.nut.base.security.SecureString;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -45,18 +49,20 @@ public class POP3 implements MailReader
 
     public static final int SAFE_PORT_995 = 995;
     
+    private final Object lock = new Object();
+    
     private final String host;
     private final int port;
     private final boolean auth;
     private final boolean sslEnable;
     private final boolean readonly;
     private final String username;
-    private final String password;
+    private final SecureString password;
     
     private volatile Store store;
     private volatile Folder inbox;
 
-    public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, String password)
+    public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureString password)
     {
         this.host = host;
         this.port = port;
@@ -66,50 +72,93 @@ public class POP3 implements MailReader
         this.username = username;
         this.password = password;
     }
+    public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
+    {
+        this(host, port, auth, sslEnable, readonly, username, new EncryptedString(password));
+    }
     
     @Override
     public void connect() throws Exception
     {
-        Properties props = new Properties();
-        props.put(MAIL_POP3_HOST, host);
-        props.put(MAIL_POP3_PORT, Integer.toString(port));
-        props.put(MAIL_POP3_AUTH, auth);
-        props.put(MAIL_POP3_SSL_ENABLE, sslEnable);
+       synchronized (lock)
+        {
+            Properties props = new Properties();
+            props.put(MAIL_POP3_HOST, host);
+            props.put(MAIL_POP3_PORT, Integer.toString(port));
+            props.put(MAIL_POP3_AUTH, auth);
+            props.put(MAIL_POP3_SSL_ENABLE, sslEnable);
 
-        Session session = Session.getInstance(props);
-        store = session.getStore(POP3);
-        store.connect(host, username, password);
+            Session session = Session.getInstance(props);
+            store = session.getStore(POP3);
+            char[] pass = password.toCharArray();
+            try
+            {
+                store.connect(host, username, new String(pass));
+            }
+            finally
+            {
+                Arrays.fill(pass,'\0');
+            }
+            inbox = store.getFolder("INBOX");
+            inbox.open(readonly ? Folder.READ_ONLY:Folder.READ_WRITE);
+        }
+    }
 
-        inbox = store.getFolder("INBOX");
-        inbox.open(readonly ? Folder.READ_ONLY:Folder.READ_WRITE);
+    @Override
+    public boolean isConnected()
+    {
+        synchronized (lock)
+        {
+            return store!=null && store.isConnected();
+        }
     }
     
     @Override
     public Message[] getMessages() throws MessagingException
     {
-        return inbox.getMessages();
+        synchronized (lock)
+        {
+           return inbox.getMessages();
+        }
     }
     
+    @Override
+    public Message[] getMessages(Date after) throws MessagingException
+    {
+        synchronized (lock)
+        {
+            ArrayList<Message> list = new ArrayList<>();
+            Message[] m = inbox.getMessages();
+            if(after==null)
+            {
+                return m;
+            }
+            for(Message item : m)
+            {
+                if(item.getReceivedDate().compareTo(after)>0)
+                {
+                    list.add(item);
+                }
+            }
+            return list.toArray(new Message[0]);
+        }
+    }
+ 
     @Override
     public void close() 
     {
-        try
+        synchronized (lock)
         {
-            inbox.close(false);
-            store.close();
+            try
+            {
+                inbox.close(false);
+                store.close();
+            }
+            catch (MessagingException ex)
+            {
+                Logger.getLogger(POP3.class.getName()).log(Level.SEVERE, (String) null, ex);
+            }
         }
-        catch (MessagingException ex)
-        {
-            Logger.getLogger(POP3.class.getName()).log(Level.SEVERE, (String) null, ex);
-        }
-    }
-
-    @Override
-    public Message[] getMessages(Date since)
-    {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
- 
-    
+    }    
     
 }

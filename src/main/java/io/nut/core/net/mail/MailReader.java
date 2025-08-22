@@ -33,6 +33,7 @@ import java.util.Date;
 public interface MailReader extends Closeable
 {
     
+    boolean isConnected();
     void connect() throws Exception;
     Message[] getMessages() throws MessagingException;
     Message[] getMessages(Date since) throws MessagingException;

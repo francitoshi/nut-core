@@ -21,6 +21,8 @@
  */
 package io.nut.core.net.mail;
 
+import io.nut.base.security.EncryptedString;
+import io.nut.base.security.SecureString;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -29,6 +31,7 @@ import jakarta.mail.Store;
 import jakarta.mail.search.ComparisonTerm;
 import jakarta.mail.search.ReceivedDateTerm;
 import jakarta.mail.search.SearchTerm;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -48,18 +51,20 @@ public class IMAP implements MailReader
 
     public static final int SAFE_PORT_993 = 993;
 
+    private final Object lock = new Object();
+    
     private final String host;
     private final int port;
     private final boolean auth;
     private final boolean sslEnable;
     private final boolean readonly;
     private final String username;
-    private final String password;
+    private final SecureString password;
     
     private volatile Store store;
     private volatile Folder inbox;
 
-    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, String password)
+    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureString password)
     {
         this.host = host;
         this.port = port;
@@ -69,48 +74,85 @@ public class IMAP implements MailReader
         this.username = username;
         this.password = password;
     }
+    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
+    {
+        this(host, port, auth, sslEnable, readonly, username, new EncryptedString(password));
+    }
 
     @Override
     public void connect() throws Exception
     {
-        Properties props = new Properties();
-        props.put(MAIL_STORE_PROTOCOL, IMAP);
-        props.put(MAIL_IMAP_HOST, host);
-        props.put(MAIL_IMAP_PORT, Integer.toString(port));
-        props.put(MAIL_IMAP_SSL_ENABLE, sslEnable?"true":"false"); // enables SSL
-
-        Session session = Session.getInstance(props);
-        store = session.getStore(IMAP);
-        store.connect(host, username, password);
-
-        inbox = store.getFolder("INBOX");
-        inbox.open(readonly ? Folder.READ_ONLY:Folder.READ_WRITE);
+       synchronized (lock)
+        {
+            Properties props = new Properties();
+            props.put(MAIL_STORE_PROTOCOL, IMAP);
+            props.put(MAIL_IMAP_HOST, host);
+            props.put(MAIL_IMAP_PORT, Integer.toString(port));
+            props.put(MAIL_IMAP_SSL_ENABLE, sslEnable?"true":"false"); // enables SSL
+            
+            
+            Session session = Session.getInstance(props);
+            store = session.getStore(IMAP);
+            char[] pass = password.toCharArray();
+            try
+            {
+                store.connect(host, username, new String(pass));
+            }
+            finally
+            {
+                Arrays.fill(pass,'\0');
+            }
+            inbox = store.getFolder("INBOX");
+            inbox.open(readonly ? Folder.READ_ONLY:Folder.READ_WRITE);
+        }
+    }
+    
+    @Override
+    public boolean isConnected()
+    {
+        synchronized (lock)
+        {
+            return store!=null && store.isConnected();
+        }
     }
 
     @Override
     public Message[] getMessages() throws MessagingException
     {
-       return inbox.getMessages();
+        synchronized (lock)
+        {
+            return inbox.getMessages();
+        }
     }
 
     @Override
     public Message[] getMessages(Date after) throws MessagingException
     {
-        SearchTerm dateTerm = new ReceivedDateTerm(ComparisonTerm.GT, after);
-        return inbox.search(dateTerm);
+        synchronized (lock)
+        {
+            if(after==null)
+            {
+                return inbox.getMessages();
+            }
+            SearchTerm dateTerm = new ReceivedDateTerm(ComparisonTerm.GT, after);
+            return inbox.search(dateTerm);
+        }
     }
 
     @Override
     public void close() 
     {
-        try
+        synchronized (lock)
         {
-            inbox.close(false);
-            store.close();
-        }
-        catch (MessagingException ex)
-        {
-            Logger.getLogger(IMAP.class.getName()).log(Level.SEVERE, (String) null, ex);
+            try
+            {
+                inbox.close(false);
+                store.close();
+            }
+            catch (MessagingException ex)
+            {
+                Logger.getLogger(IMAP.class.getName()).log(Level.SEVERE, (String) null, ex);
+            }
         }
     }
 }
