@@ -21,8 +21,7 @@
  */
 package io.nut.core.net.mail;
 
-import io.nut.base.security.EncryptedString;
-import io.nut.base.security.SecureString;
+import io.nut.base.security.SecureChars;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -57,12 +56,12 @@ public class POP3 implements MailReader
     private final boolean sslEnable;
     private final boolean readonly;
     private final String username;
-    private final SecureString password;
+    private final SecureChars password;
     
     private volatile Store store;
     private volatile Folder inbox;
 
-    public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureString password)
+    public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureChars password)
     {
         this.host = host;
         this.port = port;
@@ -74,7 +73,7 @@ public class POP3 implements MailReader
     }
     public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
     {
-        this(host, port, auth, sslEnable, readonly, username, new EncryptedString(password));
+        this(host, port, auth, sslEnable, readonly, username, new SecureChars(password));
     }
     
     @Override
@@ -90,7 +89,7 @@ public class POP3 implements MailReader
 
             Session session = Session.getInstance(props);
             store = session.getStore(POP3);
-            char[] pass = password.toCharArray();
+            char[] pass = password.getChars();
             try
             {
                 store.connect(host, username, new String(pass));

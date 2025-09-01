@@ -21,8 +21,7 @@
  */
 package io.nut.core.net.mail;
 
-import io.nut.base.security.EncryptedString;
-import io.nut.base.security.SecureString;
+import io.nut.base.security.SecureChars;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.NoSuchProviderException;
@@ -57,11 +56,11 @@ public class SMTP implements Closeable
     private final boolean auth;
     private final boolean starttlsEnable;
     private final String username;
-    private final SecureString password;
+    private final SecureChars password;
     private final String from;
     private final String replyTo;
 
-    public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, SecureString password, String from, String replyTo)
+    public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, SecureChars password, String from, String replyTo)
     {
         this.host = host;
         this.port = port;
@@ -74,15 +73,15 @@ public class SMTP implements Closeable
     }
     public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, char[] password, String from, String replyTo)
     {
-        this(host, port, auth, starttlsEnable, username, new EncryptedString(password), from, replyTo);
+        this(host, port, auth, starttlsEnable, username, new SecureChars(password), from, replyTo);
     }    
-    public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, SecureString password, String from)
+    public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, SecureChars password, String from)
     {
         this(host, port, auth, starttlsEnable, username, password, from, null);
     }
     public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, char[] password, String from)
     {
-        this(host, port, auth, starttlsEnable, username, new EncryptedString(password), from, null);
+        this(host, port, auth, starttlsEnable, username, new SecureChars(password), from, null);
     }
     
     private volatile Session session;
@@ -100,7 +99,7 @@ public class SMTP implements Closeable
 
             session = Session.getInstance(props);
             transport = session.getTransport("smtp");
-            char[] pass = password.toCharArray();
+            char[] pass = password.getChars();
             try
             {
                 transport.connect(username, new String(pass));

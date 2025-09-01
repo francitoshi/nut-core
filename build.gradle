@@ -4,7 +4,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.35'
+version = '0.1.36'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
@@ -15,7 +15,7 @@ repositories
 //run "./gradlew dependencies --configuration runtimeClasspath" to verify version problems
 dependencies
 {
-    implementation 'com.github.francitoshi:nut-base:0.1.35'
+    implementation 'com.github.francitoshi:nut-base:0.1.36'
 	
     implementation 'org.bouncycastle:bcprov-jdk18on:1.81'
     implementation 'org.bouncycastle:bcpkix-jdk18on:1.81'
@@ -33,6 +33,7 @@ dependencies
 
     testImplementation 'org.apache.commons:commons-csv:1.14.0'
     testImplementation 'ch.obermuhlner:big-math:2.3.2'
+    testImplementation 'com.icegreen:greenmail-junit5:2.0.1'
 }
 
 java 
