@@ -4,7 +4,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.38'
+version = '0.1.39'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
@@ -20,7 +20,7 @@ def nutVersion = version
 dependencies
 {
     implementation "com.github.francitoshi:nut-base:${nutVersion}"
-	
+
     compileOnly "org.bouncycastle:bcprov-jdk18on:${bouncycastleVersion}"
     compileOnly "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
 
