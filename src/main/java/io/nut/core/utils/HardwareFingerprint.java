@@ -1,7 +1,7 @@
 /*
  *  HardwareFingerprint.java
  *
- *  Copyright (C) 2025 francitoshi@gmail.com
+ *  Copyright (C) 2025-2026 francitoshi@gmail.com
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,12 +32,6 @@ import java.security.NoSuchAlgorithmException;
 
 public class HardwareFingerprint
 {
-
-    public static void main(String[] args)
-    {
-        System.out.println("Fingerprint del equipo: " + getHardwareFingerprint());
-    }
-
     public static String getHardwareFingerprint()
     {
         SystemInfo si = new SystemInfo();
@@ -63,8 +57,6 @@ public class HardwareFingerprint
 
         // Concatenar datos
         String rawData = cpuId + "|" + diskSerial + "|" + baseboardSerial;
-        System.out.println("rawData: " + rawData);
-        
         // hash
         return sha256(rawData);
     }
