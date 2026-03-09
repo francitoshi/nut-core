@@ -1,6 +1,7 @@
 plugins 
 {
     id 'java'
+    id 'maven-publish'  // for JitPack
 }
 
 group = 'com.github.francitoshi'
@@ -47,8 +48,8 @@ dependencies
 
 java 
 {
-    sourceCompatibility = 1.8 // java 8
-    targetCompatibility = 1.8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
     withSourcesJar()
     withJavadocJar()
 }
@@ -62,4 +63,18 @@ wrapper
 test 
 {
     useJUnitPlatform()
+}
+
+publishing 
+{
+    publications 
+    {
+        maven(MavenPublication) 
+        {
+            groupId = 'com.github.francitoshi'
+            artifactId = 'nut-core'
+            version = project.version
+            from components.java
+        }
+    }
 }
