@@ -5,7 +5,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.63'
+version = '0.1.64'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
@@ -30,7 +30,7 @@ dependencies
     
     implementation 'org.jline:jline-terminal:3.30.4'
 
-    implementation 'com.sun.mail:jakarta.mail:2.0.1'
+    implementation 'com.sun.mail:jakarta.mail:2.0.2'
 
     implementation 'org.mapdb:mapdb:3.1.0'
 
