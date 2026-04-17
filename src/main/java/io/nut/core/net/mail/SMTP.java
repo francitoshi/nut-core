@@ -1,7 +1,7 @@
 /*
  *  SMTP.java
  *
- *  Copyright (C) 2025 francitoshi@gmail.com
+ *  Copyright (C) 2025-2026 francitoshi@gmail.com
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -99,15 +99,9 @@ public class SMTP implements Closeable
 
             session = Session.getInstance(props);
             transport = session.getTransport("smtp");
-            char[] pass = password.getChars();
-            try
-            {
-                transport.connect(username, new String(pass));
-            }
-            finally
-            {
-                Arrays.fill(pass,'\0');
-            }
+            
+            transport.connect(username, password.apply((pass)-> new String(pass)));
+            
             return this;
         }
     }

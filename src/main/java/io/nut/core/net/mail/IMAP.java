@@ -1,7 +1,7 @@
 /*
  *  IMAP.java
  *
- *  Copyright (C) 2025 francitoshi@gmail.com
+ *  Copyright (C) 2025-2026 francitoshi@gmail.com
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -92,15 +92,9 @@ public class IMAP implements MailReader
             
             Session session = Session.getInstance(props);
             store = session.getStore(IMAP);
-            char[] pass = password.getChars();
-            try
-            {
-                store.connect(host, username, new String(pass));
-            }
-            finally
-            {
-                Arrays.fill(pass,'\0');
-            }
+
+            store.connect(host, username, password.apply((pass)-> new String(pass)));
+
             inbox = store.getFolder("INBOX");
             inbox.open(readonly ? Folder.READ_ONLY:Folder.READ_WRITE);
         }
