@@ -5,7 +5,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.64'
+version = '0.1.65'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
