@@ -5,7 +5,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.71'
+version = '0.1.72'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
@@ -15,7 +15,7 @@ repositories
 }
 //run "./gradlew dependencies --configuration runtimeClasspath" to verify version problems
 
-def bouncycastleVersion = '1.83'
+def bouncycastleVersion = '1.84'
 def nutVersion = version
 
 dependencies
