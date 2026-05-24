@@ -27,14 +27,18 @@ import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
+import jakarta.mail.UIDFolder;
+import jakarta.mail.event.MessageCountAdapter;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
 import jakarta.mail.search.ComparisonTerm;
 import jakarta.mail.search.ReceivedDateTerm;
 import jakarta.mail.search.SearchTerm;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.eclipse.angus.mail.imap.IMAPFolder;
 
 /**
  *
@@ -42,6 +46,11 @@ import java.util.logging.Logger;
  */
 public class IMAP implements MailReader
 {
+    public interface ImapListener
+    {
+        void send(Message message, long uidValidity, long lastUID);
+    }
+    
     private static final String IMAP = "imap";
     private static final String MAIL_STORE_PROTOCOL = "mail.store.protocol";
     private static final String MAIL_IMAP_SSL_ENABLE = "mail.imap.ssl.enable";
@@ -49,6 +58,12 @@ public class IMAP implements MailReader
     private static final String MAIL_IMAP_HOST = "mail.imap.host";
 
     public static final int SAFE_PORT_993 = 993;
+    
+    static final int TYPE_TEXT = 1;
+    static final int TYPE_IMAGE = 2;
+    static final int TYPE_AUDIO = 3;
+    static final int TYPE_VIDEO = 4;
+    static final int TYPE_APPLICATION = 5;
 
     private final Object lock = new Object();
     
@@ -62,6 +77,11 @@ public class IMAP implements MailReader
     
     private volatile Store store;
     private volatile Folder inbox;
+    private volatile IMAPFolder imapInbox;
+    private volatile ImapListener imapListener;
+
+    private volatile long uidValidity;
+    private volatile long lastUID;
 
     public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureChars password)
     {
@@ -77,7 +97,38 @@ public class IMAP implements MailReader
     {
         this(host, port, auth, sslEnable, readonly, username, new SecureChars(password));
     }
+    
+    public void setImapListener(ImapListener listener, long uidValidity, long lastUID)
+    {
+        this.imapListener = listener;
+        this.uidValidity = uidValidity;
+        this.lastUID = lastUID;
+    }
 
+    private final MessageCountListener listener = new MessageCountAdapter()
+    {
+        @Override
+        public void messagesAdded(MessageCountEvent event)
+        {
+            for (Message msg : event.getMessages())
+            {
+                if(imapInbox!=null)
+                {
+                    try
+                    {
+                        long uid = imapInbox.getUID(msg);
+                        lastUID = Math.max(lastUID, uid);
+                    }
+                    catch (MessagingException ex)
+                    {
+                        Logger.getLogger(IMAP.class.getName()).log(Level.SEVERE, (String) null, ex);
+                    }
+                }
+                imapListener.send(msg, uidValidity, lastUID);
+            }
+        }
+    };
+    
     @Override
     public void connect() throws Exception
     {
@@ -89,17 +140,48 @@ public class IMAP implements MailReader
             props.put(MAIL_IMAP_PORT, Integer.toString(port));
             props.put(MAIL_IMAP_SSL_ENABLE, sslEnable?"true":"false"); // enables SSL
             
-            
             Session session = Session.getInstance(props);
             store = session.getStore(IMAP);
 
             store.connect(host, username, password.apply((pass)-> new String(pass)));
-
             inbox = store.getFolder("INBOX");
             inbox.open(readonly ? Folder.READ_ONLY:Folder.READ_WRITE);
+            imapInbox = (inbox instanceof IMAPFolder) ? (IMAPFolder)inbox : null;
+
+            if(imapListener!=null)
+            {
+                inbox.addMessageCountListener(listener);
+                if(imapInbox!=null)
+                {
+                    long uid = imapInbox.getUIDValidity();
+                    if(uid!=uidValidity)
+                    {
+                        lastUID = 0;
+                        uidValidity = uid;
+                    }
+                }
+            }
         }
     }
     
+    public void idle() throws MessagingException
+    {
+        if(imapInbox!=null)
+        {
+            Message[] list = imapInbox.getMessagesByUID(lastUID + 1, UIDFolder.LASTUID);
+            for (Message msg : list) 
+            {
+                long uid = imapInbox.getUID(msg);
+                lastUID = Math.max(lastUID, uid);
+                imapListener.send(msg, uidValidity, lastUID);
+            }
+            while(isConnected()) 
+            {
+                imapInbox.idle();
+            }
+        }
+    }
+
     @Override
     public boolean isConnected()
     {

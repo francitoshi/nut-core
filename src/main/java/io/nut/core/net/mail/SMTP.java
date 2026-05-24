@@ -31,8 +31,8 @@ import jakarta.mail.internet.AddressException;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import java.io.Closeable;
-import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -86,6 +86,7 @@ public class SMTP implements Closeable
     
     private volatile Session session;
     private volatile Transport transport;
+    private volatile long lastUsed = 0;
 
     public SMTP connect() throws NoSuchProviderException, MessagingException
     {
@@ -101,10 +102,28 @@ public class SMTP implements Closeable
             transport = session.getTransport("smtp");
             
             transport.connect(username, password.apply((pass)-> new String(pass)));
-            
+            lastUsed = System.nanoTime();
             return this;
         }
     }
+
+    public SMTP reconnect(long idleTimeoutMillis) throws MessagingException
+    {
+        synchronized (lock)
+        {
+            long idleTimeoutNanos = TimeUnit.MILLISECONDS.toNanos(idleTimeoutMillis);
+            long now = System.nanoTime();
+            if (transport != null && transport.isConnected() && (now - lastUsed) > idleTimeoutNanos)
+            {
+                close(); // reconectamos fresca
+            }
+            if (transport == null || !transport.isConnected())
+            {
+                connect();
+            }
+            return this;
+        }
+    }    
 
     public boolean isConnected()
     {
@@ -152,6 +171,7 @@ public class SMTP implements Closeable
             message.setSubject(subject);
             message.setText(text);
             transport.sendMessage(message, message.getAllRecipients());
+            lastUsed = System.nanoTime();
         }
     }
     public void send(String subject, String text, String to, String cc) throws AddressException, MessagingException

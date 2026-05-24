@@ -5,7 +5,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.72'
+version = '0.1.74'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
@@ -30,7 +30,7 @@ dependencies
     
     compileOnly 'org.jline:jline-terminal:3.30.4'
 
-    compileOnly 'com.sun.mail:jakarta.mail:2.0.2'
+    compileOnly 'org.eclipse.angus:angus-mail:2.0.5'
 
     compileOnly 'org.mapdb:mapdb:3.1.0'
 
@@ -46,7 +46,7 @@ dependencies
     
     testImplementation 'org.jline:jline-terminal:3.30.4'
 
-    testImplementation 'com.sun.mail:jakarta.mail:2.0.2'
+    testImplementation 'org.eclipse.angus:angus-mail:2.0.5'
 
     testImplementation 'org.mapdb:mapdb:3.1.0'
 
