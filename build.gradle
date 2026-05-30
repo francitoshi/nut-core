@@ -52,7 +52,7 @@ dependencies
 
     testImplementation 'com.github.oshi:oshi-core:6.6.3'
 
-    testImplementation 'org.apache.commons:commons-csv:1.14.0'
+    testImplementation 'org.apache.commons:commons-csv:1.14.1'
     testImplementation 'ch.obermuhlner:big-math:2.3.2'
     testImplementation 'com.icegreen:greenmail-junit5:2.0.1'
 }
