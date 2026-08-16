@@ -5,7 +5,7 @@ plugins
 }
 
 group = 'com.github.francitoshi'
-version = '0.1.87'
+version = '0.1.88'
 //remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
 
 repositories 
@@ -25,7 +25,7 @@ dependencies
     compileOnly "org.bouncycastle:bcprov-jdk18on:${bouncycastleVersion}"
     compileOnly "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
 
-    compileOnly 'com.google.code.gson:gson:2.13.1'
+    compileOnly 'com.google.code.gson:gson:2.14.0'
     compileOnly "com.squareup.okhttp3:okhttp:4.12.0"
     
     compileOnly 'org.jline:jline-terminal:3.30.4'
@@ -41,7 +41,7 @@ dependencies
     testImplementation "org.bouncycastle:bcprov-jdk18on:${bouncycastleVersion}"
     testImplementation "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
 
-    testImplementation 'com.google.code.gson:gson:2.13.1'
+    testImplementation 'com.google.code.gson:gson:2.14.0'
     testImplementation "com.squareup.okhttp3:okhttp:4.12.0"
     
     testImplementation 'org.jline:jline-terminal:3.30.4'
