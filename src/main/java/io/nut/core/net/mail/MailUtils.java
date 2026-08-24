@@ -23,13 +23,14 @@ public class MailUtils
         {
             try 
             {
-                return m.getReceivedDate();
+                Date received = m.getReceivedDate();
+                return received != null ? received : m.getSentDate();
             } 
             catch (MessagingException e) 
             {
                 return new Date(0);
             }
-        }));
+        }, Comparator.nullsFirst(Comparator.naturalOrder())));
         return items;
     }
 }
