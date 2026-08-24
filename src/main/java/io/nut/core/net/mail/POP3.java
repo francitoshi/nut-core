@@ -111,7 +111,12 @@ public class POP3 implements MailReader
             }
             for(Message item : m)
             {
-                if(item.getReceivedDate().compareTo(after)>0)
+                Date date = item.getReceivedDate();
+                if(date==null)
+                {
+                    date = item.getSentDate();
+                }
+                if(date!=null && date.compareTo(after)>0)
                 {
                     list.add(item);
                 }
