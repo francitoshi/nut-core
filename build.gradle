@@ -4,9 +4,8 @@ plugins
     id 'maven-publish'  // for JitPack
 }
 
-group = 'com.github.francitoshi'
-version = '0.1.97'
-//remember to execute 'git tag -a x.x.x -m "Version x.x.x"'
+group = nutGroup
+version = nutVersion
 
 repositories 
 {
