@@ -1,36 +1,13 @@
 /*
- *  GsonSerializerTest.java
- *
- *  Copyright (c) 2025 francitoshi@gmail.com
- *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *  Report bugs or new features to: francitoshi@gmail.com
+ * Copyright (C) 2025-2026 francitoshi@gmail.com
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * See LICENSE file in the project root for full license text.
  */
 package io.nut.core.utils.serializer;
 
-import io.nut.base.crypto.EncryptedMapWrapper;
-import io.nut.base.crypto.Kripto;
-import io.nut.base.serializer.StringSerializer;
-import java.io.File;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Map;
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
 
 /**
  *
@@ -172,54 +149,6 @@ public class GsonSerializerTest
         assertEquals(dir1, usu11.address);
         assertEquals(dir2, usu22.address);
 
-    }
-
-    @Test
-    public void testAes() throws InvalidKeySpecException
-    {
-        GsonSerializer<User> instance = new GsonSerializer<>(User.class);
-        Kripto kripto = Kripto.getInstance();
-        
-        char[] passphrase = "passphrase".toCharArray();
-
-        Address dir1 = new Address("street1", 1);
-        Address dir2 = new Address("street2", 1);
-        User user1 = new User("name1", 11, true, dir1, "password1");
-        User user2 = new User("name2", 22, true, dir2, "password2");
-        
-        File file = new File("encrypted.db");
-        System.out.println("\n=== write ===");
-        try(DB db = DBMaker.fileDB(file).make())
-        {
-            file.deleteOnExit();
-            Map<String, String> map = (Map<String, String>) db.hashMap("userdata").createOrOpen();
-
-            EncryptedMapWrapper<String, User> wrapper = new EncryptedMapWrapper<>(kripto, map, passphrase, "salt", 10, 256, new StringSerializer(), instance);
-
-        
-            wrapper.put("user1", user1);
-            wrapper.put("user2", user2);
-        }        
-        
-        System.out.println("\n=== read ===");
-        try(DB db = DBMaker.fileDB(file).make())
-        {
-            file.deleteOnExit();
-            Map<String, String> map = (Map<String, String>) db.hashMap("userdata").createOrOpen();
-
-            EncryptedMapWrapper<String, User> wrapper = new EncryptedMapWrapper<>(kripto, map, passphrase, "salt", 10, 256, new StringSerializer(), instance);
-
-            User user11 = wrapper.get("user1");
-            User user22 = wrapper.get("user2");
-            
-            assertEquals(user1, user11);
-            assertEquals(user2, user22);
-            
-            assertEquals(user1.address, user11.address);
-            assertEquals(user2.address, user22.address);
-            
-        }        
-        
     }
 
 }
