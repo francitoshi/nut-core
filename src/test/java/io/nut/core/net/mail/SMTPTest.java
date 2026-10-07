@@ -26,9 +26,12 @@ import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import io.nut.base.crypto.Kripto;
 import io.nut.base.crypto.Rand;
+import io.nut.base.jca.Kr;
 import io.nut.base.security.SecureChars;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -39,13 +42,13 @@ import org.junit.jupiter.api.extension.RegisterExtension;
  */
 public class SMTPTest
 {
-    static final Rand RAND = Kripto.getRand();
+    static final Random RANDOM = ThreadLocalRandom.current();
     
     static final String ALICE = "alice";
     static final String BOB = "bob";
     
-    static final String ALICE_PASS = "alice-pass"+RAND.nextLong();
-    static final String BOB_PASS = "bob-pass"+RAND.nextLong();
+    static final String ALICE_PASS = "alice-pass"+RANDOM.nextLong();
+    static final String BOB_PASS = "bob-pass"+RANDOM.nextLong();
 
     static final String ALICE_LOCALHOST = "alice@localhost";
     static final String BOB_LOCALHOST = "bob@localhost";
