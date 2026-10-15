@@ -5,8 +5,8 @@
  */
 package io.nut.core.gauge;
 
+import io.nut.base.commons.lang.Strings;
 import io.nut.base.gauge.AbstractGauge;
-import io.nut.base.lang.Strings;
 import java.io.IOException;
 import java.io.PrintStream;
 import org.jline.terminal.Terminal;

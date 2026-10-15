@@ -20,6 +20,7 @@ def nutVersion = version
 dependencies
 {
     implementation "com.github.francitoshi.nut-base:nut-base-commons:${nutVersion}"
+    implementation "com.github.francitoshi.nut-base:nut-base-ui:${nutVersion}"
     implementation "com.github.francitoshi.nut-base:nut-base-util:${nutVersion}"
     
     compileOnly "org.bouncycastle:bcprov-jdk18on:${bouncycastleVersion}"

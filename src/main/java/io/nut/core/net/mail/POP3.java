@@ -5,7 +5,7 @@
  */
 package io.nut.core.net.mail;
 
-import io.nut.base.security.SecureChars;
+import io.nut.base.commons.security.SecureChars;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
