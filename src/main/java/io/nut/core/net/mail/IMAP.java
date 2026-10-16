@@ -38,10 +38,14 @@ public class IMAP implements MailReader
     private static final String IMAP = "imap";
     private static final String MAIL_STORE_PROTOCOL = "mail.store.protocol";
     private static final String MAIL_IMAP_SSL_ENABLE = "mail.imap.ssl.enable";
+    private static final String MAIL_IMAP_SSL_CHECKSERVERIDENTITY = "mail.imap.ssl.checkserveridentity";
+    private static final String MAIL_IMAP_SSL_PROTOCOLS = "mail.imap.ssl.protocols";
     private static final String MAIL_IMAP_STARTTLS_ENABLE = "mail.imap.starttls.enable";
     private static final String MAIL_IMAP_STARTTLS_REQUIRED = "mail.imap.starttls.required";
     private static final String MAIL_IMAP_PORT = "mail.imap.port";
     private static final String MAIL_IMAP_HOST = "mail.imap.host";
+
+    private static final String SSL_PROTOCOLS = "TLSv1.3 TLSv1.2";
 
     public static final int SAFE_PORT_993 = 993;
     
@@ -135,6 +139,8 @@ public class IMAP implements MailReader
             props.put(MAIL_IMAP_HOST, host);
             props.put(MAIL_IMAP_PORT, Integer.toString(port));
             props.put(MAIL_IMAP_SSL_ENABLE, sslEnable?"true":"false"); // enables implicit SSL
+            props.put(MAIL_IMAP_SSL_CHECKSERVERIDENTITY, "true");
+            props.put(MAIL_IMAP_SSL_PROTOCOLS, SSL_PROTOCOLS);
             props.put(MAIL_IMAP_STARTTLS_ENABLE, starttlsEnable?"true":"false");
             props.put(MAIL_IMAP_STARTTLS_REQUIRED, starttlsEnable?"true":"false");
             

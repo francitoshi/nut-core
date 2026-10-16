@@ -29,8 +29,12 @@ public class SMTP implements Closeable
     private static final String MAIL_SMTP_AUTH              = "mail.smtp.auth";
     private static final String MAIL_SMTP_STARTTLS_ENABLE   = "mail.smtp.starttls.enable";
     private static final String MAIL_SMTP_STARTTLS_REQUIRED = "mail.smtp.starttls.required";
+    private static final String MAIL_SMTP_SSL_CHECKSERVERIDENTITY = "mail.smtp.ssl.checkserveridentity";
+    private static final String MAIL_SMTP_SSL_PROTOCOLS          = "mail.smtp.ssl.protocols";
     private static final String MAIL_SMTP_HOST              = "mail.smtp.host";
     private static final String MAIL_SMTP_PORT              = "mail.smtp.port";
+
+    private static final String SSL_PROTOCOLS = "TLSv1.3 TLSv1.2";
 
     public static final int SAFE_PORT_587 = 587;
     
@@ -85,6 +89,8 @@ public class SMTP implements Closeable
             props.put(MAIL_SMTP_AUTH, auth?"true":"false");
             props.put(MAIL_SMTP_STARTTLS_ENABLE, starttlsEnable?"true":"false");
             props.put(MAIL_SMTP_STARTTLS_REQUIRED, starttlsEnable?"true":"false");
+            props.put(MAIL_SMTP_SSL_CHECKSERVERIDENTITY, "true");
+            props.put(MAIL_SMTP_SSL_PROTOCOLS, SSL_PROTOCOLS);
             props.put(MAIL_SMTP_HOST, host);
             props.put(MAIL_SMTP_PORT, Integer.toString(port));
 
