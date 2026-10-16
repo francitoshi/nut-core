@@ -28,6 +28,7 @@ public class SMTP implements Closeable
 {
     private static final String MAIL_SMTP_AUTH              = "mail.smtp.auth";
     private static final String MAIL_SMTP_STARTTLS_ENABLE   = "mail.smtp.starttls.enable";
+    private static final String MAIL_SMTP_STARTTLS_REQUIRED = "mail.smtp.starttls.required";
     private static final String MAIL_SMTP_HOST              = "mail.smtp.host";
     private static final String MAIL_SMTP_PORT              = "mail.smtp.port";
 
@@ -76,9 +77,14 @@ public class SMTP implements Closeable
     {
         synchronized (lock)
         {
+            if (auth && !starttlsEnable)
+            {
+                throw new MessagingException("Refusing to authenticate over an unencrypted SMTP channel: enable STARTTLS or use implicit SSL");
+            }
             Properties props = new Properties();
             props.put(MAIL_SMTP_AUTH, auth?"true":"false");
             props.put(MAIL_SMTP_STARTTLS_ENABLE, starttlsEnable?"true":"false");
+            props.put(MAIL_SMTP_STARTTLS_REQUIRED, starttlsEnable?"true":"false");
             props.put(MAIL_SMTP_HOST, host);
             props.put(MAIL_SMTP_PORT, Integer.toString(port));
 

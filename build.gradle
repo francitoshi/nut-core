@@ -14,7 +14,7 @@ repositories
 }
 //run "./gradlew dependencies --configuration runtimeClasspath" to verify version problems
 
-def bouncycastleVersion = '1.84'
+def bouncycastleVersion = '1.85'
 def nutVersion = version
 
 dependencies

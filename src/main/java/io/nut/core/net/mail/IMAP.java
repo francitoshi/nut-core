@@ -38,6 +38,8 @@ public class IMAP implements MailReader
     private static final String IMAP = "imap";
     private static final String MAIL_STORE_PROTOCOL = "mail.store.protocol";
     private static final String MAIL_IMAP_SSL_ENABLE = "mail.imap.ssl.enable";
+    private static final String MAIL_IMAP_STARTTLS_ENABLE = "mail.imap.starttls.enable";
+    private static final String MAIL_IMAP_STARTTLS_REQUIRED = "mail.imap.starttls.required";
     private static final String MAIL_IMAP_PORT = "mail.imap.port";
     private static final String MAIL_IMAP_HOST = "mail.imap.host";
 
@@ -55,6 +57,7 @@ public class IMAP implements MailReader
     private final int port;
     private final boolean auth;
     private final boolean sslEnable;
+    private final boolean starttlsEnable;
     private final boolean readonly;
     private final String username;
     private final SecureChars password;
@@ -69,17 +72,22 @@ public class IMAP implements MailReader
 
     public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureChars password)
     {
+        this(host, port, auth, sslEnable, false, readonly, username, password);
+    }
+    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
+    {
+        this(host, port, auth, sslEnable, false, readonly, username, new SecureChars(password));
+    }
+    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean starttlsEnable, boolean readonly, String username, SecureChars password)
+    {
         this.host = host;
         this.port = port;
         this.auth = auth;
         this.sslEnable = sslEnable;
+        this.starttlsEnable = starttlsEnable;
         this.readonly = readonly;
         this.username = username;
         this.password = password;
-    }
-    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
-    {
-        this(host, port, auth, sslEnable, readonly, username, new SecureChars(password));
     }
     
     public void setImapListener(ImapListener listener, long uidValidity, long lastUID)
@@ -118,11 +126,17 @@ public class IMAP implements MailReader
     {
        synchronized (lock)
         {
+            if (auth && !sslEnable && !starttlsEnable)
+            {
+                throw new MessagingException("Refusing to authenticate over an unencrypted IMAP channel: enable STARTTLS or implicit SSL");
+            }
             Properties props = new Properties();
             props.put(MAIL_STORE_PROTOCOL, IMAP);
             props.put(MAIL_IMAP_HOST, host);
             props.put(MAIL_IMAP_PORT, Integer.toString(port));
-            props.put(MAIL_IMAP_SSL_ENABLE, sslEnable?"true":"false"); // enables SSL
+            props.put(MAIL_IMAP_SSL_ENABLE, sslEnable?"true":"false"); // enables implicit SSL
+            props.put(MAIL_IMAP_STARTTLS_ENABLE, starttlsEnable?"true":"false");
+            props.put(MAIL_IMAP_STARTTLS_REQUIRED, starttlsEnable?"true":"false");
             
             Session session = Session.getInstance(props);
             store = session.getStore(IMAP);
