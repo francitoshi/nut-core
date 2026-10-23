@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * See LICENSE file in the project root for full license text.
  */
-package io.nut.core.utils.serializer;
+package io.nut.core.serializer;
 
-import io.nut.base.serializer.Serializer;
+import io.nut.base.commons.serializer.Serializer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.ByteArrayInputStream;
@@ -26,7 +26,7 @@ public class GsonSerializer<T> implements Serializer<T>
     }
 
     @Override
-    public byte[] toBytes(T t)
+    public byte[] serialize(T t)
     {
         if (t == null)
         {
@@ -45,7 +45,7 @@ public class GsonSerializer<T> implements Serializer<T>
     }
 
     @Override
-    public T fromBytes(byte[] bytes)
+    public T deserialize(byte[] bytes)
     {
         if (bytes == null || clazz == null)
         {

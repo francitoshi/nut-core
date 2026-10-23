@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * See LICENSE file in the project root for full license text.
  */
-package io.nut.core.utils.serializer;
+package io.nut.core.serializer;
 
 import java.util.Objects;
 import org.junit.jupiter.api.Test;
@@ -138,11 +138,11 @@ public class GsonSerializerTest
         User usu1 = new User("nombre1", 11, true, dir1, "password1");
         User usu2 = new User("nombre2", 22, true, dir2, "password2");
         
-        byte[] bytes1 = instance.toBytes(usu1);
-        byte[] bytes2 = instance.toBytes(usu2);
+        byte[] bytes1 = instance.serialize(usu1);
+        byte[] bytes2 = instance.serialize(usu2);
         
-        User usu11 = instance.fromBytes(bytes1);
-        User usu22 = instance.fromBytes(bytes2);
+        User usu11 = instance.deserialize(bytes1);
+        User usu22 = instance.deserialize(bytes2);
 
         assertEquals(usu1, usu11);
         assertEquals(usu2, usu22);
