@@ -27,6 +27,7 @@ dependencies
     compileOnly "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
 
     compileOnly 'com.google.code.gson:gson:2.14.0'
+    compileOnly 'com.squareup.moshi:moshi:1.15.2'
     compileOnly "com.squareup.okhttp3:okhttp:4.12.0"
     
     compileOnly 'org.jline:jline-terminal:3.30.4'
@@ -45,6 +46,7 @@ dependencies
     testImplementation "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
 
     testImplementation 'com.google.code.gson:gson:2.14.0'
+    testImplementation 'com.squareup.moshi:moshi:1.15.2'
     testImplementation "com.squareup.okhttp3:okhttp:4.12.0"
     
     testImplementation 'org.jline:jline-terminal:3.30.4'
