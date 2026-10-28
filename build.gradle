@@ -19,9 +19,9 @@ def nutVersion = version
 
 dependencies
 {
-    implementation "com.github.francitoshi.nut-base:nut-base-commons:${nutVersion}"
-    implementation "com.github.francitoshi.nut-base:nut-base-ui:${nutVersion}"
-    implementation "com.github.francitoshi.nut-base:nut-base-util:${nutVersion}"
+    implementation "io.github.francitoshi.nut-base:nut-base-commons:${nutVersion}"
+    implementation "io.github.francitoshi.nut-base:nut-base-ui:${nutVersion}"
+    implementation "io.github.francitoshi.nut-base:nut-base-util:${nutVersion}"
     
     compileOnly "org.bouncycastle:bcprov-jdk18on:${bouncycastleVersion}"
     compileOnly "org.bouncycastle:bcpkix-jdk18on:${bouncycastleVersion}"
@@ -88,7 +88,7 @@ publishing
     {
         maven(MavenPublication) 
         {
-            groupId = 'com.github.francitoshi'
+            groupId = 'io.github.francitoshi'
             artifactId = 'nut-core'
             version = project.version
             from components.java
