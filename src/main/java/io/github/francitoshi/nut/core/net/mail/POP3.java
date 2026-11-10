@@ -18,6 +18,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * {@link MailReader} implementation over POP3, using implicit SSL when
+ * {@code sslEnable} is set. POP3 reports no per-message received date, so
+ * {@link #getMessages(Date)} falls back to the {@code Date} (sent) header.
  *
  * @author franci
  */
@@ -29,6 +32,7 @@ public class POP3 implements MailReader
     private static final String MAIL_POP3_AUTH = "mail.pop3.auth";
     private static final String MAIL_POP3_SSL_ENABLE = "mail.pop3.ssl.enable";
 
+    /** Implicit-SSL port commonly used by POP3 servers. */
     public static final int SAFE_PORT_995 = 995;
     
     private final Object lock = new Object();
@@ -44,6 +48,17 @@ public class POP3 implements MailReader
     private volatile Store store;
     private volatile Folder inbox;
 
+    /**
+     * Client for {@code host:port}.
+     *
+     * @param host      server host name.
+     * @param port      server port, e.g. {@link #SAFE_PORT_995}.
+     * @param auth      whether to authenticate with {@code username}.
+     * @param sslEnable enable implicit SSL.
+     * @param readonly  open the mailbox read-only.
+     * @param username  user name, may be {@code null} when {@code auth} is false.
+     * @param password  password holder, may be {@code null} when {@code auth} is false.
+     */
     public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureChars password)
     {
         this.host = host;
@@ -54,11 +69,16 @@ public class POP3 implements MailReader
         this.username = username;
         this.password = password;
     }
+    /** Convenience variant that builds a {@link SecureChars} from {@code password}. */
     public POP3(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
     {
         this(host, port, auth, sslEnable, readonly, username, new SecureChars(password));
     }
     
+    
+    /**
+     * Connects to the server and opens INBOX.
+     */
     @Override
     public void connect() throws Exception
     {

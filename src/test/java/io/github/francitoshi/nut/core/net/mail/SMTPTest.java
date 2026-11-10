@@ -5,7 +5,6 @@
  */
 package io.github.francitoshi.nut.core.net.mail;
 
-import io.github.francitoshi.nut.core.net.mail.SMTP;
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
@@ -40,7 +39,7 @@ public class SMTPTest
             .withConfiguration(GreenMailConfiguration.aConfig().withUser(ALICE_LOCALHOST, ALICE, ALICE_PASS).withUser(BOB_LOCALHOST, BOB, BOB_PASS));
     
     @Test
-    void testSendEmail() throws MessagingException 
+    void testSendEmail() throws MessagingException
     {
         String host = greenMail.getSmtp().getBindTo();
         int port = greenMail.getSmtp().getPort();
@@ -49,16 +48,101 @@ public class SMTPTest
         {
             smtp.send(TEST_SUBJECT, THIS_IS_THE_EMAIL_BODY, BOB_LOCALHOST);
         }
-        
+
         assertTrue(greenMail.waitForIncomingEmail(5000, 1));
 
         MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
-        
+
         assertEquals(1, receivedMessages.length);
 
         MimeMessage receivedMessage = receivedMessages[0];
         assertEquals(TEST_SUBJECT, receivedMessage.getSubject());
         assertEquals(BOB_LOCALHOST, receivedMessage.getAllRecipients()[0].toString());
+    }
+
+    @Test
+    void testSendEmailWithCc() throws MessagingException
+    {
+        String host = greenMail.getSmtp().getBindTo();
+        int port = greenMail.getSmtp().getPort();
+
+        try( SMTP smtp = new SMTP(host, port, false, false, ALICE, new SecureChars(ALICE_PASS.toCharArray()), ALICE_LOCALHOST, ALICE_LOCALHOST).connect() )
+        {
+            smtp.send(TEST_SUBJECT, THIS_IS_THE_EMAIL_BODY, BOB_LOCALHOST, ALICE_LOCALHOST);
+        }
+
+        assertTrue(greenMail.waitForIncomingEmail(5000, 2));
+
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
+        assertEquals(2, receivedMessages.length);
+
+        MimeMessage delivered = receivedMessages[0];
+        assertEquals(TEST_SUBJECT, delivered.getSubject());
+        assertEquals(2, delivered.getAllRecipients().length);
+        assertEquals(ALICE_LOCALHOST, delivered.getReplyTo()[0].toString());
+    }
+
+    @Test
+    void testSendEmailWithoutCcWhenNull() throws MessagingException
+    {
+        String host = greenMail.getSmtp().getBindTo();
+        int port = greenMail.getSmtp().getPort();
+
+        try( SMTP smtp = new SMTP(host, port, false, false, ALICE, new SecureChars(ALICE_PASS.toCharArray()), ALICE_LOCALHOST).connect() )
+        {
+            smtp.send(TEST_SUBJECT, THIS_IS_THE_EMAIL_BODY, BOB_LOCALHOST, null);
+        }
+
+        assertTrue(greenMail.waitForIncomingEmail(5000, 1));
+
+        MimeMessage[] receivedMessages = greenMail.getReceivedMessages();
+        assertEquals(1, receivedMessages.length);
+        assertEquals(1, receivedMessages[0].getAllRecipients().length);
+    }
+
+    @Test
+    void testConnectRefusesAuthWithoutEncryption() throws MessagingException
+    {
+        String host = greenMail.getSmtp().getBindTo();
+        int port = greenMail.getSmtp().getPort();
+
+        SMTP smtp = new SMTP(host, port, true, false, ALICE, new SecureChars(ALICE_PASS.toCharArray()), ALICE_LOCALHOST);
+
+        assertThrows(MessagingException.class, smtp::connect);
+        assertFalse(smtp.isConnected());
+    }
+
+    @Test
+    void testReconnectAfterCloseAndIdleness() throws MessagingException
+    {
+        String host = greenMail.getSmtp().getBindTo();
+        int port = greenMail.getSmtp().getPort();
+
+        SMTP smtp = new SMTP(host, port, false, false, ALICE, new SecureChars(ALICE_PASS.toCharArray()), ALICE_LOCALHOST);
+
+        try
+        {
+            smtp.connect();
+            assertTrue(smtp.isConnected());
+
+            // idle but still connected: nothing to do beyond keeping the link
+            smtp.reconnect(0);
+            assertTrue(smtp.isConnected());
+
+            smtp.close();
+            assertFalse(smtp.isConnected());
+
+            // closed: reconnect must establish a fresh connection
+            smtp.reconnect(0);
+            assertTrue(smtp.isConnected());
+
+            smtp.send(TEST_SUBJECT, THIS_IS_THE_EMAIL_BODY, BOB_LOCALHOST);
+            assertTrue(greenMail.waitForIncomingEmail(5000, 1));
+        }
+        finally
+        {
+            smtp.close();
+        }
     }
     
     private static final String TEST_SUBJECT = "Test Subject";

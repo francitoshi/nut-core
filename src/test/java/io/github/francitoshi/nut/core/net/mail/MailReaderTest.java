@@ -5,10 +5,6 @@
  */
 package io.github.francitoshi.nut.core.net.mail;
 
-import io.github.francitoshi.nut.core.net.mail.MailReader;
-import io.github.francitoshi.nut.core.net.mail.SMTP;
-import io.github.francitoshi.nut.core.net.mail.POP3;
-import io.github.francitoshi.nut.core.net.mail.IMAP;
 import com.icegreen.greenmail.configuration.GreenMailConfiguration;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;

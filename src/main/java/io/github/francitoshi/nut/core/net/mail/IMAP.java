@@ -9,6 +9,8 @@ import io.github.francitoshi.nut.base.commons.security.SecureChars;
 import jakarta.mail.Folder;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
+import jakarta.mail.NoSuchProviderException;
+import jakarta.mail.Provider;
 import jakarta.mail.Session;
 import jakarta.mail.Store;
 import jakarta.mail.UIDFolder;
@@ -25,17 +27,32 @@ import java.util.logging.Logger;
 import org.eclipse.angus.mail.imap.IMAPFolder;
 
 /**
+ * {@link MailReader} implementation over IMAP, using implicit SSL or STARTTLS.
+ * {@link #connect()} refuses to authenticate over an unencrypted channel.
+ * <p>When an {@link ImapListener} is set, {@link #idle()} keeps the connection
+ * open and reports new messages together with the folder's UIDVALIDITY and the
+ * highest UID seen so far, so the caller can resume from where it left off.</p>
  *
  * @author franci
  */
 public class IMAP implements MailReader
 {
+    /**
+     * Callback notified, synchronously from {@link IMAP#idle()} or during
+     * {@link IMAP#connect()}, about messages the caller has not processed yet.
+     */
     public interface ImapListener
     {
+        /**
+         * @param message     the new message.
+         * @param uidValidity current UIDVALIDITY of the mailbox.
+         * @param lastUID     highest UID processed so far.
+         */
         void send(Message message, long uidValidity, long lastUID);
     }
     
     private static final String IMAP = "imap";
+    private static final String ANGUS_IMAP_STORE = "org.eclipse.angus.mail.imap.IMAPStore";
     private static final String MAIL_STORE_PROTOCOL = "mail.store.protocol";
     private static final String MAIL_IMAP_SSL_ENABLE = "mail.imap.ssl.enable";
     private static final String MAIL_IMAP_SSL_CHECKSERVERIDENTITY = "mail.imap.ssl.checkserveridentity";
@@ -47,6 +64,7 @@ public class IMAP implements MailReader
 
     private static final String SSL_PROTOCOLS = "TLSv1.3 TLSv1.2";
 
+    /** Implicit-SSL port commonly used by IMAP servers. */
     public static final int SAFE_PORT_993 = 993;
     
     static final int TYPE_TEXT = 1;
@@ -74,14 +92,19 @@ public class IMAP implements MailReader
     private volatile long uidValidity;
     private volatile long lastUID;
 
-    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureChars password)
-    {
-        this(host, port, auth, sslEnable, false, readonly, username, password);
-    }
-    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
-    {
-        this(host, port, auth, sslEnable, false, readonly, username, new SecureChars(password));
-    }
+    /**
+     * Client intended for explicit STARTTLS (or implicit SSL when both flags
+     * are false and {@code sslEnable} is true) against {@code host:port}.
+     *
+     * @param host            server host name.
+     * @param port            server port, e.g. {@link #SAFE_PORT_993}.
+     * @param auth            whether to authenticate with {@code username}.
+     * @param sslEnable       enable implicit SSL.
+     * @param starttlsEnable  enable STARTTLS and make it mandatory.
+     * @param readonly        open the mailbox read-only.
+     * @param username        user name, may be {@code null} when {@code auth} is false.
+     * @param password        password holder, may be {@code null} when {@code auth} is false.
+     */
     public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean starttlsEnable, boolean readonly, String username, SecureChars password)
     {
         this.host = host;
@@ -93,7 +116,28 @@ public class IMAP implements MailReader
         this.username = username;
         this.password = password;
     }
+
+    /** Convenience variant that keeps the password in a {@link SecureChars}. */
+    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, SecureChars password)
+    {
+        this(host, port, auth, sslEnable, false, readonly, username, password);
+    }
+    /** Convenience variant that builds a {@link SecureChars} from {@code password}. */
+    public IMAP(String host, int port, boolean auth, boolean sslEnable, boolean readonly, String username, char[] password)
+    {
+        this(host, port, auth, sslEnable, false, readonly, username, new SecureChars(password));
+    }
     
+    
+    /**
+     * Registers the listener and the resume point. If the mailbox reports a
+     * different UIDVALIDITY at {@link #connect()}, the UID cursor is reset to
+     * 0 and {@code listener} will see every message.
+     *
+     * @param listener    receives new messages; may be {@code null}.
+     * @param uidValidity UIDVALIDITY as last seen by the caller.
+     * @param lastUID     highest UID already processed by the caller.
+     */
     public void setImapListener(ImapListener listener, long uidValidity, long lastUID)
     {
         this.imapListener = listener;
@@ -125,6 +169,32 @@ public class IMAP implements MailReader
         }
     };
     
+    /**
+     * When several jakarta.mail providers are on the classpath, {@link Session}
+     * uses the first provider registered for {@code imap}, which may lack UID
+     * and IDLE support. Selects the angus implementation explicitly when it is
+     * present.
+     */
+    private static void forceAngusImapProvider(Session session) throws NoSuchProviderException
+    {
+        for(Provider provider : session.getProviders())
+        {
+            if(Provider.Type.STORE == provider.getType()
+                    && IMAP.equals(provider.getProtocol())
+                    && ANGUS_IMAP_STORE.equals(provider.getClassName()))
+            {
+                session.setProvider(provider);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Connects to the server and opens INBOX, refusing to authenticate over an
+     * unencrypted channel. If a listener is registered, client-side
+     * notifications are wired up and the UID cursor is reset when the
+     * mailbox's UIDVALIDITY changed.
+     */
     @Override
     public void connect() throws Exception
     {
@@ -145,6 +215,7 @@ public class IMAP implements MailReader
             props.put(MAIL_IMAP_STARTTLS_REQUIRED, starttlsEnable?"true":"false");
             
             Session session = Session.getInstance(props);
+            forceAngusImapProvider(session); // the angus provider exposes UID and IDLE
             store = session.getStore(IMAP);
 
             store.connect(host, username, password.apply((pass)-> new String(pass)));
@@ -168,6 +239,12 @@ public class IMAP implements MailReader
         }
     }
     
+    /**
+     * Re-dispatches every message newer than the UID cursor through the
+     * listener, then blocks on IMAP IDLE (inside a loop) dispatching newly
+     * received messages, until the connection is closed. Requires a listener
+     * and a server that supports IDLE.
+     */
     public void idle() throws MessagingException
     {
         if(imapInbox!=null)

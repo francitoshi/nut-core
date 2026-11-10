@@ -21,6 +21,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Minimal SMTP client for sending plain text mail over STARTTLS (or without
+ * encryption). {@link #connect()} refuses to authenticate over an unencrypted
+ * channel.
+ * <p>An instance may be closed and connected again at will; use
+ * {@link #reconnect(long)} to drop connections that have been idle for longer
+ * than a given timeout.</p>
  *
  * @author franci
  */
@@ -36,6 +42,7 @@ public class SMTP implements Closeable
 
     private static final String SSL_PROTOCOLS = "TLSv1.3 TLSv1.2";
 
+    /** Port commonly used by STARTTLS-capable SMTP relays. */
     public static final int SAFE_PORT_587 = 587;
     
     private final Object lock = new Object();
@@ -49,6 +56,18 @@ public class SMTP implements Closeable
     private final String from;
     private final String replyTo;
 
+    /**
+     * Client for {@code host:port} that sends mail as {@code from}.
+     *
+     * @param host           server host name.
+     * @param port           server port, e.g. {@link #SAFE_PORT_587}.
+     * @param auth           whether to authenticate with {@code username}.
+     * @param starttlsEnable enable STARTTLS and make it mandatory.
+     * @param username       user name, may be {@code null} when {@code auth} is false.
+     * @param password       password holder, may be {@code null} when {@code auth} is false.
+     * @param from           address used as the sender.
+     * @param replyTo        Reply-To address, or {@code null} to omit it.
+     */
     public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, SecureChars password, String from, String replyTo)
     {
         this.host = host;
@@ -60,14 +79,17 @@ public class SMTP implements Closeable
         this.from = from;
         this.replyTo = replyTo;
     }
+    /** Convenience variant that builds a {@link SecureChars} from {@code password}. */
     public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, char[] password, String from, String replyTo)
     {
         this(host, port, auth, starttlsEnable, username, new SecureChars(password), from, replyTo);
-    }    
+    }
+    /** Convenience variant with no Reply-To. */
     public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, SecureChars password, String from)
     {
         this(host, port, auth, starttlsEnable, username, password, from, null);
     }
+    /** Convenience variant that builds a {@link SecureChars} and sets no Reply-To. */
     public SMTP(String host, int port, boolean auth, boolean starttlsEnable, String username, char[] password, String from)
     {
         this(host, port, auth, starttlsEnable, username, new SecureChars(password), from, null);
@@ -77,6 +99,12 @@ public class SMTP implements Closeable
     private volatile Transport transport;
     private volatile long lastUsed = 0;
 
+    /**
+     * Creates the transport and connects to the server. May be called again
+     * after {@link #close()} to reuse this instance.
+     *
+     * @return this instance, for chaining.
+     */
     public SMTP connect() throws NoSuchProviderException, MessagingException
     {
         synchronized (lock)
@@ -103,6 +131,13 @@ public class SMTP implements Closeable
         }
     }
 
+    /**
+     * Keeps {@code this} usable, closing and reconnecting only when the
+     * connection has been idle for longer than the given timeout.
+     *
+     * @param idleTimeoutMillis reconnect when idle longer than this.
+     * @return this instance, for chaining.
+     */
     public SMTP reconnect(long idleTimeoutMillis) throws MessagingException
     {
         synchronized (lock)
@@ -121,6 +156,9 @@ public class SMTP implements Closeable
         }
     }    
 
+    /**
+     * @return {@code true} while the transport is connected.
+     */
     public boolean isConnected()
     {
         synchronized (lock)
@@ -129,6 +167,9 @@ public class SMTP implements Closeable
         }
     }
     
+    /**
+     * Closes the transport. Any {@link MessagingException} is only logged.
+     */
     @Override
     public void close()
     {
@@ -148,6 +189,17 @@ public class SMTP implements Closeable
         }
     }
     
+    /**
+     * Builds and sends a plain text mail. The transport must be connected.
+     * {@link MimeMessage#saveChanges()} is applied, so a {@code Date} header
+     * is generated when the caller did not set one.
+     *
+     * @param subject subject line.
+     * @param text    plain text body.
+     * @param to      comma separated TO recipients; must not be empty.
+     * @param cc      comma separated CC recipients, or {@code null}/empty to omit.
+     * @param bcc     comma separated BCC recipients, or {@code null}/empty to omit.
+     */
     public void send(String subject, String text, String to, String cc, String bcc) throws AddressException, MessagingException
     {
         synchronized (lock)
@@ -169,14 +221,17 @@ public class SMTP implements Closeable
             }
             message.setSubject(subject);
             message.setText(text);
+            message.saveChanges(); // generates the Date header by Transport.send() behavior
             transport.sendMessage(message, message.getAllRecipients());
             lastUsed = System.nanoTime();
         }
     }
+    /** {@link #send(String, String, String, String, String)} without BCC. */
     public void send(String subject, String text, String to, String cc) throws AddressException, MessagingException
     {
         send(subject, text, to, cc, null);
     }
+    /** {@link #send(String, String, String)} convenience without CC nor BCC. */
     public void send(String subject, String text, String to) throws AddressException, MessagingException
     {
         send(subject, text, to, null, null);
