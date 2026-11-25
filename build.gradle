@@ -1,3 +1,5 @@
+//NUT Core (NUT Utility Toolkit Core) - generic java 8 library
+
 plugins 
 {
     id 'java'
@@ -71,12 +73,6 @@ java
     withJavadocJar()
 }
 
-wrapper 
-{
-    gradleVersion = "8.2"
-    distributionType = Wrapper.DistributionType.ALL
-}
-
 test 
 {
     useJUnitPlatform()
@@ -95,3 +91,10 @@ publishing
         }
     }
 }
+
+wrapper 
+{
+    gradleVersion = "8.14.8"
+    distributionType = Wrapper.DistributionType.ALL
+}
+
